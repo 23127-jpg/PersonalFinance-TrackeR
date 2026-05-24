@@ -10,6 +10,7 @@ const app = express();
 const allowedOrigins = [
   'https://preeminent-paletas-f3f1f0.netlify.app',
   'https://finance542.netlify.app',
+  // Add your actual Netlify URL here if it differs from the ones above
   'http://localhost:3000',
   'http://localhost:5500',
   'http://127.0.0.1:5500'

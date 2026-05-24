@@ -33,22 +33,26 @@ export const AuthProvider = ({ children }) => {
       }
 
       try {
-        const res = await axios.get(`${BASE_URL}/api/auth/me`);
+        const res = await axios.get(`${BASE_URL}/api/auth/me`, { timeout: 10000 });
         if (res.data.success) {
           setUser(res.data.user);
         } else {
-          logout();
+          // Clear invalid token without triggering another loadUser cycle
+          setToken(null);
+          setUser(null);
         }
       } catch (err) {
         console.error('Error loading user profile:', err.response?.data?.error || err.message);
-        logout();
+        // Clear invalid token without triggering another loadUser cycle
+        setToken(null);
+        setUser(null);
       } finally {
         setLoading(false);
       }
     };
 
     loadUser();
-  }, [token]);
+  }, []);
 
   // Register User
   const register = async (username, email, password) => {
@@ -92,15 +96,15 @@ export const AuthProvider = ({ children }) => {
 
   // Logout User
   const logout = async () => {
-    setLoading(true);
     try {
-      await axios.post(`${BASE_URL}/api/auth/logout`);
+      await axios.post(`${BASE_URL}/api/auth/logout`, {}, { timeout: 5000 });
     } catch (err) {
       console.warn('Silent API logout warning:', err.message);
+    } finally {
+      setToken(null);
+      setUser(null);
+      setLoading(false);
     }
-    setToken(null);
-    setUser(null);
-    setLoading(false);
   };
 
   const clearError = () => setError(null);
