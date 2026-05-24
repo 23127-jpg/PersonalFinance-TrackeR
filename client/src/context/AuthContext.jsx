@@ -1,5 +1,7 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import axios from '../api/axios';
+import axios from 'axios';
+
+const BASE_URL = 'https://personalfinance-tracker.onrender.com';
 
 const AuthContext = createContext();
 
@@ -31,7 +33,7 @@ export const AuthProvider = ({ children }) => {
       }
 
       try {
-        const res = await axios.get('/api/auth/me');
+        const res = await axios.get(`${BASE_URL}/api/auth/me`);
         if (res.data.success) {
           setUser(res.data.user);
         } else {
@@ -53,7 +55,7 @@ export const AuthProvider = ({ children }) => {
     setLoading(true);
     setError(null);
     try {
-      const res = await axios.post('/api/auth/register', { username, email, password });
+      const res = await axios.post(`${BASE_URL}/api/auth/register`, { username, email, password });
       if (res.data.success) {
         setToken(res.data.token);
         setUser(res.data.user);
@@ -73,7 +75,7 @@ export const AuthProvider = ({ children }) => {
     setLoading(true);
     setError(null);
     try {
-      const res = await axios.post('/api/auth/login', { usernameOrEmail, password });
+      const res = await axios.post(`${BASE_URL}/api/auth/login`, { usernameOrEmail, password });
       if (res.data.success) {
         setToken(res.data.token);
         setUser(res.data.user);
@@ -92,7 +94,7 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     setLoading(true);
     try {
-      await axios.post('/api/auth/logout');
+      await axios.post(`${BASE_URL}/api/auth/logout`);
     } catch (err) {
       console.warn('Silent API logout warning:', err.message);
     }
