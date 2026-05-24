@@ -1,8 +1,0 @@
-{
-  "rewrites": [
-    {
-      "source": "/api/:path*",
-      "destination": "https://personalfinance-tracker.onrender.com/api/:path*"
-    }
-  ]
-}
