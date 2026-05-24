@@ -1,0 +1,23 @@
+[build]
+  # This is a static HTML site - no build step needed
+  command   = ""
+  publish   = "."
+
+[build.environment]
+  NODE_VERSION = "18"
+
+# Redirect rules so direct page links don't 404
+[[redirects]]
+  from   = "/sign-up"
+  to     = "/sign-up.html"
+  status = 200
+
+[[redirects]]
+  from   = "/login"
+  to     = "/login.html"
+  status = 200
+
+[[redirects]]
+  from   = "/support"
+  to     = "/support.html"
+  status = 200
