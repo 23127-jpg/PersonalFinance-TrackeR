@@ -95,14 +95,14 @@
           <p>Fill in your details to get started</p>
         </div>
         
-        <form class="modern-signup-form" action="https://finance542.netlify.app/" method="post">
+        <form class="modern-signup-form" id="signup-form" action="#">
           <div class="form-row">
             <div class="form-group">
               <label for="fullname">
                 <i class="fas fa-user"></i>
                 Full Name <span>*</span>
               </label>
-              <input type="text" id="fullname" name="fullname" required placeholder="Enter your full name">
+              <input type="text" id="fullname" name="fullname" required placeholder="Enter your username (min 3 chars)">
             </div>
             <div class="form-group">
               <label for="email">
@@ -234,6 +234,100 @@
   <script>feather.replace();</script>
   <script src="script.js"></script>
   <script src="https://kit.fontawesome.com/your-font-awesome-kit.js" crossorigin="anonymous"></script>
+
+  <script>
+    const API_BASE = 'https://personalfinance-tracker.onrender.com';
+
+    document.getElementById('signup-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const fullname  = document.getElementById('fullname').value.trim();
+      const email     = document.getElementById('email').value.trim();
+      const password  = document.getElementById('password').value;
+      const confirm   = document.getElementById('confirm-password').value;
+      const submitBtn = this.querySelector('button[type="submit"]');
+
+      // --- Client-side validation ---
+      if (fullname.length < 3) {
+        showBanner('Username must be at least 3 characters long.', 'error');
+        return;
+      }
+      if (password.length < 6) {
+        showBanner('Password must be at least 6 characters long.', 'error');
+        return;
+      }
+      if (password !== confirm) {
+        showBanner('Passwords do not match. Please try again.', 'error');
+        return;
+      }
+
+      // --- Loading state ---
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Account...';
+
+      try {
+        const response = await fetch(`${API_BASE}/api/auth/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: fullname,   // backend expects "username"
+            email:    email,
+            password: password
+          })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          // Save token for future authenticated requests
+          localStorage.setItem('authToken', data.token);
+          localStorage.setItem('user', JSON.stringify(data.user));
+          showBanner('Account created successfully! Redirecting...', 'success');
+          setTimeout(() => { window.location.href = './login.html'; }, 2000);
+        } else {
+          const msg = data.error || (data.errors && data.errors[0]?.msg) || 'Registration failed. Please try again.';
+          showBanner(msg, 'error');
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<i class="fas fa-user-plus"></i> Create Account';
+        }
+      } catch (err) {
+        console.error('Signup error:', err);
+        showBanner('Cannot connect to server. Please check your connection and try again.', 'error');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-user-plus"></i> Create Account';
+      }
+    });
+
+    function showBanner(message, type) {
+      const existing = document.getElementById('auth-banner');
+      if (existing) existing.remove();
+
+      const banner = document.createElement('div');
+      banner.id = 'auth-banner';
+      banner.style.cssText = `
+        position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+        background: ${ type === 'success' ? 'linear-gradient(135deg,#28a745,#20c997)' : 'linear-gradient(135deg,#dc3545,#c82333)' };
+        color: #fff; padding: 14px 28px; border-radius: 10px;
+        font-size: 15px; font-weight: 600; z-index: 99999;
+        box-shadow: 0 6px 24px rgba(0,0,0,0.25);
+        animation: slideDown 0.4s ease-out;
+        max-width: 90vw; text-align: center;
+      `;
+      banner.innerHTML = `<i class="fas fa-${ type === 'success' ? 'check-circle' : 'exclamation-circle' }" style="margin-right:8px"></i>${message}`;
+
+      if (!document.getElementById('auth-banner-style')) {
+        const s = document.createElement('style');
+        s.id = 'auth-banner-style';
+        s.textContent = '@keyframes slideDown{from{top:-60px;opacity:0}to{top:20px;opacity:1}}';
+        document.head.appendChild(s);
+      }
+
+      document.body.appendChild(banner);
+      if (type !== 'success') {
+        setTimeout(() => banner.remove(), 5000);
+      }
+    }
+  </script>
 </body>
 
 </html>

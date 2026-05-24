@@ -95,13 +95,13 @@
           <p>Enter your credentials to access your dashboard</p>
         </div>
         
-        <form class="modern-login-form" action="/login" method="post">
+        <form class="modern-login-form" id="login-form" action="#">
           <div class="form-group">
             <label for="username">
               <i class="fas fa-user"></i>
               Username or Email <span>*</span>
             </label>
-            <input type="text" id="username" name="username" required placeholder="Enter your username or email">
+            <input type="text" id="usernameOrEmail" name="usernameOrEmail" required placeholder="Enter your username or email">
           </div>
           
           <div class="form-group">
@@ -210,5 +210,88 @@
   <script>feather.replace();</script>
   <script src="script.js"></script>
   <script src="https://kit.fontawesome.com/your-font-awesome-kit.js" crossorigin="anonymous"></script>
+
+  <script>
+    const API_BASE = 'https://personalfinance-tracker.onrender.com';
+
+    document.getElementById('login-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const usernameOrEmail = document.getElementById('usernameOrEmail').value.trim();
+      const password        = document.getElementById('password').value;
+      const submitBtn       = this.querySelector('button[type="submit"]');
+
+      // --- Client-side validation ---
+      if (!usernameOrEmail) {
+        showBanner('Please enter your username or email.', 'error');
+        return;
+      }
+      if (!password) {
+        showBanner('Please enter your password.', 'error');
+        return;
+      }
+
+      // --- Loading state ---
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing In...';
+
+      try {
+        const response = await fetch(`${API_BASE}/api/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ usernameOrEmail, password })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          localStorage.setItem('authToken', data.token);
+          localStorage.setItem('user', JSON.stringify(data.user));
+          showBanner('Login successful! Redirecting...', 'success');
+          setTimeout(() => { window.location.href = './index.html'; }, 1500);
+        } else {
+          const msg = data.error || (data.errors && data.errors[0]?.msg) || 'Invalid credentials. Please try again.';
+          showBanner(msg, 'error');
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign In';
+        }
+      } catch (err) {
+        console.error('Login error:', err);
+        showBanner('Cannot connect to server. Please check your connection and try again.', 'error');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign In';
+      }
+    });
+
+    function showBanner(message, type) {
+      const existing = document.getElementById('auth-banner');
+      if (existing) existing.remove();
+
+      const banner = document.createElement('div');
+      banner.id = 'auth-banner';
+      banner.style.cssText = `
+        position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+        background: ${ type === 'success' ? 'linear-gradient(135deg,#28a745,#20c997)' : 'linear-gradient(135deg,#dc3545,#c82333)' };
+        color: #fff; padding: 14px 28px; border-radius: 10px;
+        font-size: 15px; font-weight: 600; z-index: 99999;
+        box-shadow: 0 6px 24px rgba(0,0,0,0.25);
+        animation: slideDown 0.4s ease-out;
+        max-width: 90vw; text-align: center;
+      `;
+      banner.innerHTML = `<i class="fas fa-${ type === 'success' ? 'check-circle' : 'exclamation-circle' }" style="margin-right:8px"></i>${message}`;
+
+      if (!document.getElementById('auth-banner-style')) {
+        const s = document.createElement('style');
+        s.id = 'auth-banner-style';
+        s.textContent = '@keyframes slideDown{from{top:-60px;opacity:0}to{top:20px;opacity:1}}';
+        document.head.appendChild(s);
+      }
+
+      document.body.appendChild(banner);
+      if (type !== 'success') {
+        setTimeout(() => banner.remove(), 5000);
+      }
+    }
+  </script>
 </body>
 </html>

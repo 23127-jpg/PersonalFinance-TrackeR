@@ -7,7 +7,26 @@ require('dotenv').config();
 const app = express();
 
 // Middlewares
-app.use(cors());
+const allowedOrigins = [
+  'https://preeminent-paletas-f3f1f0.netlify.app',
+  'https://finance542.netlify.app',
+  'http://localhost:3000',
+  'http://localhost:5500',
+  'http://127.0.0.1:5500'
+];
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, curl, Postman)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      return callback(null, true);
+    }
+    return callback(new Error('CORS policy: Origin not allowed — ' + origin), false);
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
 app.use(express.json());
 app.use(morgan('dev'));
 // Root route
